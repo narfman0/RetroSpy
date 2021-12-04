@@ -26,6 +26,10 @@
 
 #include "NES.h"
 
+void NESSpy::setup() {
+	firstLatchSignal = true;
+}
+
 void NESSpy::loop() {
 	noInterrupts();
 	updateState();
@@ -54,6 +58,16 @@ void NESSpy::updateState() {
 	unsigned char *rawDataPtr = rawData;
 
 	WAIT_FALLING_EDGE(NES_LATCH);
+
+	if (firstLatchSignal == true) {
+		do {
+			WAIT_FALLING_EDGE(NES_CLOCK);
+			*rawDataPtr = 1;
+			++rawDataPtr;
+		} while (--bits > 0);
+		firstLatchSignal = false;
+		return;
+	}
 
 	do {
 		WAIT_FALLING_EDGE(NES_CLOCK);

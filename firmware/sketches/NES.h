@@ -38,12 +38,14 @@
 
 class NESSpy : public ControllerSpy {
 public:
+	void setup();
 	void loop();
 	void writeSerial();
 	void debugSerial();
 	void updateState();
 
 private:
+	bool firstLatchSignal;
 	unsigned char rawData[NES_BITCOUNT * 3];
 };
 
