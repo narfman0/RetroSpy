@@ -1,5 +1,5 @@
 //
-// Jaguar.h
+// config_arduino.h
 //
 // Author:
 //       Christopher "Zoggins" Mallery <zoggins@retro-spy.com>
@@ -24,20 +24,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef JaguarSpy_h
-#define JaguarSpy_h
+#define NOT_CONNECTED NA
 
-#include "ControllerSpy.h"
+#define DIGITAL_PIN_00 0
+#define DIGITAL_PIN_01 1
+#define DIGITAL_PIN_02 2
+#define DIGITAL_PIN_03 3
+#define DIGITAL_PIN_04 4
+#define DIGITAL_PIN_05 5
+#define DIGITAL_PIN_06 6
+#define DIGITAL_PIN_07 7
+#define DIGITAL_PIN_08 0
+#define DIGITAL_PIN_09 1
+#define DIGITAL_PIN_10 2
+#define DIGITAL_PIN_11 3
+#define DIGITAL_PIN_12 4
 
-class JaguarSpy : public ControllerSpy {
-public:
-	void loop();
-	void writeSerial();
-	void debugSerial();
-	void updateState();
+#define ANALOG_PIN_00 0
+#define ANALOG_PIN_01 1
+#define ANALOG_PIN_02 2
 
-private:
-	unsigned char rawData[4];
-};
+#define PORTB_PIN_OFFSET 8
 
-#endif
+#define NES_LATCH DIGITAL_PIN_03
+#define NES_CLOCK DIGITAL_PIN_06
+#define NES_DATA DIGITAL_PIN_04
+#define NES_DATA0 DIGITAL_PIN_02
+#define NES_DATA1 DIGITAL_PIN_05
+
+#define PIND_READ(pin) (PIND & (1 << (pin)))
+#define PINB_READ(pin) (PINB & (1 << (pin)))
+#define PINC_READ(pin) (PINC & (1 << (pin)))
+
+#define READ_PORTD(mask) (PIND & mask)
+#define READ_PORTB(mask) (PINB & mask)
+
+#define T_DELAY(ms) delay(0)
+#define A_DELAY(ms) delay(ms)
+
+#define FASTRUN

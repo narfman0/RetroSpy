@@ -1,5 +1,5 @@
 //
-// PCFX.h
+// config_teensy.h
 //
 // Author:
 //       Christopher "Zoggins" Mallery <zoggins@retro-spy.com>
@@ -24,20 +24,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef PCFXSpy_h
-#define PCFXSpy_h
+#define NOT_CONNECTED 0
 
-#include "ControllerSpy.h"
+// PORT D
+#define DIGITAL_PIN_02 0
+#define DIGITAL_PIN_14 1
+#define DIGITAL_PIN_07 2
+#define DIGITAL_PIN_08 3
+#define DIGITAL_PIN_06 4
+#define DIGITAL_PIN_20 5
+#define DIGITAL_PIN_21 6
+#define DIGITAL_PIN_05 7
+// PORT B
+#define DIGITAL_PIN_16 0
+#define DIGITAL_PIN_27 1
+#define DIGITAL_PIN_19 2
+#define DIGITAL_PIN_18 3
 
-class PCFXSpy : public ControllerSpy {
-public:
-	void loop();
-	void writeSerial();
-	void debugSerial();
-	void updateState();
+#define NES_LATCH DIGITAL_PIN_08
+#define NES_CLOCK DIGITAL_PIN_21
+#define NES_DATA DIGITAL_PIN_06
+#define NES_DATA0 DIGITAL_PIN_07
+#define NES_DATA1 DIGITAL_PIN_20
 
-private:
-	unsigned char rawData[8];
-};
+#define READ_PORTD(mask) (GPIOD_PDIR & mask)
+#define READ_PORTB(mask) (GPIOB_PDIR & mask)
 
-#endif
+#define PIND_READ(pin) ((READ_PORTD(0xFF)) & (1 << (pin)))
+#define PINB_READ(pin) ((READ_PORTB(0xF)) & (1 << (pin)))
+#define PINC_READ(pin) (digitalReadFast(pin))
+
+#define T_DELAY(ms) delay(ms)
+#define A_DELAY(ms) delay(0)

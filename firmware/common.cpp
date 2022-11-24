@@ -1,5 +1,5 @@
 //
-// PowerGlove.h
+// common.cpp
 //
 // Author:
 //       Christopher "Zoggins" Mallery <zoggins@retro-spy.com>
@@ -24,21 +24,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef PowerGloveSpy_h
-#define PowerGloveSpy_h
+#include "common.h"
 
-#include "ControllerSpy.h"
+void common_pin_setup()
+{
+#if defined(__arm__) && defined(CORE_TEENSY)
+	// GPIOD_PDIR & 0xFF;
+	pinMode(2, INPUT_PULLUP);
+	pinMode(14, INPUT_PULLUP);
+	pinMode(7, INPUT_PULLUP);
+	pinMode(8, INPUT_PULLUP);
+	pinMode(6, INPUT_PULLUP);
+	pinMode(20, INPUT_PULLUP);
+	pinMode(21, INPUT_PULLUP);
+	pinMode(5, INPUT_PULLUP);
 
-class PowerGloveSpy : public ControllerSpy {
-public:
-	void loop();
-	void writeSerial();
-	void debugSerial();
-	void updateState();
+	// GPIOB_PDIR & 0xF;
+	pinMode(16, INPUT_PULLUP);
+	pinMode(17, INPUT_PULLUP);
+	pinMode(19, INPUT_PULLUP);
+	pinMode(18, INPUT_PULLUP);
+#else
+	PORTD = 0x00;
+	PORTB = 0x00;
+	DDRD = 0x00;
 
-private:
-	unsigned char rawData[NES_BITCOUNT * 10];
-}
-;
-
+	for (int i = 2; i <= 6; ++i)
+		pinMode(i, INPUT_PULLUP);
 #endif
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Sends a packet of controller data over the Arduino serial interface.
+#pragma GCC optimize("-O2")
+#pragma GCC push_options
+void sendRawData(unsigned char rawControllerData[], unsigned char first, unsigned char count, unsigned long diff)
+{
+	for (unsigned char i = first; i < first + count; i++)	{
+		Serial.write(rawControllerData[i] ? ONE : ZERO);
+	}
+  Serial.write(diff & 0xff);
+  Serial.write((diff >> 8) & 0xff);
+	Serial.write(SPLIT);
+}
+#pragma GCC pop_options

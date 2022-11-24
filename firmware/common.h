@@ -1,5 +1,5 @@
 //
-// ThreeDO.h
+// common.h
 //
 // Author:
 //       Christopher "Zoggins" Mallery <zoggins@retro-spy.com>
@@ -24,21 +24,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ThreeDOSpy_h
-#define ThreeDOSpy_h
+#include "Arduino.h"
 
-#include "ControllerSpy.h"
-
-class ThreeDOSpy : public ControllerSpy {
-public:
-	void loop();
-	void writeSerial();
-	void debugSerial();
-	void updateState();
-
-private:
-	unsigned char rawData[32];
-	unsigned char bytesToReturn = 0;
-};
-
+#if defined(__arm__) && defined(CORE_TEENSY)
+#include "config_teensy.h"
+#else
+#include "config_arduino.h"
 #endif
+
+#define NES_BITCOUNT 8
+
+#define PIN_READ PIND_READ
+
+#define WAIT_FALLING_EDGE(pin) \
+	while (!PIN_READ(pin))     \
+		;                      \
+	while (PIN_READ(pin))      \
+		;
+#define WAIT_LEADING_EDGE(pin) \
+	while (PIN_READ(pin))      \
+		;                      \
+	while (!PIN_READ(pin))     \
+		;
+
+#define WAIT_FALLING_EDGEB(pin) \
+	while (!PINB_READ(pin))     \
+		;                       \
+	while (PINB_READ(pin))      \
+		;
+#define WAIT_LEADING_EDGEB(pin) \
+	while (PINB_READ(pin))      \
+		;                       \
+	while (!PINB_READ(pin))     \
+		;
+
+#define ZERO ((uint8_t)0) // Use a byte value of 0x00 to represent a bit with value 0.
+#define ONE '1'			  // Use an ASCII one to represent a bit with value 1.  This makes Arduino debugging easier.
+#define SPLIT '\n'		  // Use a new-line character to split up the controller state packets.
+
+void common_pin_setup();
+void sendRawData(unsigned char rawControllerData[], unsigned char first, unsigned char count, unsigned long diff);
