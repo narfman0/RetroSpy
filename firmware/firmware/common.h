@@ -82,6 +82,7 @@ enum VideoOutputType {
 void common_pin_setup();
 void read_shiftRegister_2wire(unsigned char rawData[], unsigned char latch, unsigned char data, unsigned char longWait, unsigned char bits);
 void sendRawData(unsigned char rawControllerData[], unsigned char first, unsigned char count);
+void sendRawData(unsigned char rawControllerData[], unsigned char first, unsigned char count, uint8_t millisDiff);
 void sendRawDataDebug(unsigned char rawControllerData[], unsigned char first, unsigned char count);
 int ScaleInteger(float oldValue, float oldMin, float oldMax, float newMin, float newMax);
 int middleOfThree(int a, int b, int c);

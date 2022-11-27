@@ -45,6 +45,7 @@ public:
 
 private:
 	unsigned char rawData[NES_BITCOUNT * 3];
+	unsigned long lastMillis = 0;
 };
 
 #endif

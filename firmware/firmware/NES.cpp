@@ -39,7 +39,10 @@ void NESSpy::loop() {
 }
 
 void NESSpy::writeSerial() {
-	sendRawData(rawData, 0, NES_BITCOUNT * 3);
+	unsigned long currentMillis = millis();
+	uint8_t millisDiff = (currentMillis - lastMillis) >> 24;
+	lastMillis = currentMillis;
+	sendRawData(rawData, 0, NES_BITCOUNT * 3, millisDiff);
 }
 
 void NESSpy::debugSerial() {

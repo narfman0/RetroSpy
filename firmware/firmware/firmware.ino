@@ -10,7 +10,7 @@
 
 // ---------- Uncomment one of these options to select operation mode ---------
 // 
-//#define MODE_NES
+#define MODE_NES
 //#define MODE_POWERGLOVE
 //#define MODE_SNES
 //#define MODE_N64

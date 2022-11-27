@@ -98,10 +98,18 @@ read_loop:
 #pragma GCC push_options
 void sendRawData(unsigned char rawControllerData[], unsigned char first, unsigned char count)
 {
-	for (unsigned char i = first; i < first + count; i++) {
-		Serial.write(rawControllerData[i] ? ONE : ZERO);
-	}
-	Serial.write(SPLIT);
+  for (unsigned char i = first; i < first + count; i++) {
+    Serial.write(rawControllerData[i] ? ONE : ZERO);
+  }
+  Serial.write(SPLIT);
+}
+void sendRawData(unsigned char rawControllerData[], unsigned char first, unsigned char count, uint8_t millisDiff)
+{
+ for (unsigned char i = first; i < first + count; i++) {
+    Serial.write(rawControllerData[i] ? ONE : ZERO);
+  }
+  Serial.write(millisDiff);
+  Serial.write(SPLIT);
 }
 #pragma GCC pop_options
 
