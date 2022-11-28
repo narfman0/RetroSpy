@@ -166,10 +166,10 @@ namespace RetroSpy
 
                 byte[] packet = _localBuffer.GetRange(packetStart, packetSize).ToArray();
                 PacketReceived(this, new PacketDataEventArgs(packet));
-                if (streamwriter.BaseStream != null && packet.Length > 0)
+                if (streamwriter.BaseStream != null && packet.Length > 4)
                 {
-                    long diff = (packet[packet.Length - 1] << 8) + packet[packet.Length - 2];
-                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " diff=" + diff);
+                    var ts = (packet[packet.Length - 1] << 24) + (packet[packet.Length - 2] << 16) + (packet[packet.Length - 3] << 8) + packet[packet.Length - 4];
+                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " ts=" + ts);
                 }
 
                 // Clear our buffer up until the last split character.

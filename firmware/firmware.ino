@@ -7,7 +7,6 @@
 #include "common.h"
 
 unsigned char rawData[NES_BITCOUNT * 3];
-unsigned long lastMillis = 0;
 
 void setup()
 {
@@ -37,9 +36,8 @@ void updateState()
     unsigned char bits = NES_BITCOUNT;
     unsigned char *rawDataPtr = rawData;
 
-    while (!PIN_READ(NES_LATCH));
-    while (PIN_READ(NES_LATCH));
-    noInterrupts();
+    WAIT_LEADING_EDGE(NES_LATCH);
+
     do
     {
         WAIT_FALLING_EDGE(NES_CLOCK);
@@ -48,14 +46,11 @@ void updateState()
         *(rawDataPtr + 16) = !PIN_READ(NES_DATA1);
         ++rawDataPtr;
     } while (--bits > 0);
-    interrupts();
 }
 
 void loop()
 {
     updateState();
-    unsigned long currentMillis = millis();
-    sendRawData(rawData, 0, NES_BITCOUNT * 3, currentMillis - lastMillis);
-    lastMillis = currentMillis;
+    sendRawData(rawData, 0, NES_BITCOUNT * 3);
     T_DELAY(5);
 }
