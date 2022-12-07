@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -61,7 +62,7 @@ namespace RetroSpy
 
             _datPort.Open();
 
-            streamwriter = File.CreateText("./serialMonitorDump.txt");
+            streamwriter = null; //File.CreateText("./serialMonitorDebug.txt");
             autoEvent = new AutoResetEvent(false);
             _timer = new Timer(Tick, autoEvent, 0, TIMER_MS);
         }
@@ -88,9 +89,12 @@ namespace RetroSpy
                 autoEvent.Dispose();
                 autoEvent = null;
             }
-            if (streamwriter.BaseStream != null)
+            if (streamwriter != null)
+            {
                 streamwriter.Flush();
-            streamwriter.Close();
+                streamwriter.Close();
+                streamwriter = null;
+            }
         }
 
         private void Tick(Object stateInfo)
@@ -108,7 +112,8 @@ namespace RetroSpy
                 int readCount = _datPort.BytesToRead;
                 if (readCount < 1)
                 {
-                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " readCount < 1");
+                    if(streamwriter != null)
+                        streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " readCount < 1");
                     ticking = false;
                     return;
                 }
@@ -123,7 +128,8 @@ namespace RetroSpy
                 Stop();
                 Disconnected?.Invoke(this, EventArgs.Empty);
                 ticking = false;
-                streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " IOException");
+                if (streamwriter != null)
+                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " IOException");
                 return;
             }
 
@@ -132,7 +138,8 @@ namespace RetroSpy
             if (lastSplitIndex <= 1)
             {
                 ticking = false;
-                streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " lastSplitIndex <= 1");
+                if (streamwriter != null)
+                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " lastSplitIndex <= 1");
                 return;
             }
 
@@ -140,7 +147,8 @@ namespace RetroSpy
             if (lastSplitIndex == -1)
             {
                 ticking = false;
-                streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " lastSplitIndex == -1");
+                if (streamwriter != null)
+                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " lastSplitIndex == -1");
                 return;
             }
 
@@ -166,16 +174,24 @@ namespace RetroSpy
 
                 byte[] packet = _localBuffer.GetRange(packetStart, packetSize).ToArray();
                 PacketReceived(this, new PacketDataEventArgs(packet));
-                if (streamwriter.BaseStream != null && packet.Length > 4)
+                if(packet.Length > 2)
                 {
-                    var ts = (packet[packet.Length - 1] << 24) + (packet[packet.Length - 2] << 16) + (packet[packet.Length - 3] << 8) + packet[packet.Length - 4];
-                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " ts=" + ts);
+
+                    var diff = packet[packet.Length - 2] + (packet[packet.Length - 1] << 8);
+                    SendUdp(47569, "127.0.0.1", 47569, packet);
+                    if (streamwriter != null)
+                        streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " diff=" + diff);
                 }
 
                 // Clear our buffer up until the last split character.
                 _localBuffer.RemoveRange(0, lastSplitIndex);
             }
             ticking = false;
+        }
+        private static void SendUdp(int srcPort, string dstIp, int dstPort, byte[] data)
+        {
+            using (UdpClient c = new UdpClient(srcPort))
+                c.Send(data, data.Length, dstIp, dstPort);
         }
 
         protected virtual void Dispose(bool disposing)
