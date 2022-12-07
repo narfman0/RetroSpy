@@ -51,6 +51,6 @@ void updateState()
 void loop()
 {
     updateState();
-    sendRawData(rawData, 0, NES_BITCOUNT * 3);
+    sendRawData(rawData, NES_BITCOUNT * 3);
     T_DELAY(5);
 }

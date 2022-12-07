@@ -63,4 +63,4 @@
 #define SPLIT '\n'		  // Use a new-line character to split up the controller state packets.
 
 void common_pin_setup();
-void sendRawData(unsigned char rawControllerData[], unsigned char first, unsigned char count);
+void sendRawData(unsigned char rawControllerData[], unsigned char count);
