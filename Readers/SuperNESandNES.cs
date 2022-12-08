@@ -49,10 +49,6 @@ namespace RetroSpy.Readers
         }
 
         private static readonly string[] BUTTONS_NES = {
-            "a", "b", "select", "start", "up", "down", "left", "right", "2", "1", "5", "9", "6", "10", "11", "7", "4", "3", "12", "8", null, null, null, null
-        };
-
-        private static readonly string[] BUTTONS_NES_BACKCOMPAT = {
             "a", "b", "select", "start", "up", "down", "left", "right"
         };
 
@@ -112,7 +108,7 @@ namespace RetroSpy.Readers
                 ? throw new ArgumentNullException(nameof(packet))
                 : packet.Length == 80
                 ? ProcessPowerGlove(packet)
-                : ReadPacketButtons(packet, packet.Length == 8 ? BUTTONS_NES_BACKCOMPAT : BUTTONS_NES);
+                : ReadPacketButtons(packet, BUTTONS_NES);
         }
 
         public static ControllerStateEventArgs ProcessPowerGlove(byte[] packet)

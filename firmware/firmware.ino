@@ -6,7 +6,7 @@
 
 #include "common.h"
 
-unsigned char rawData[NES_BITCOUNT * 3];
+unsigned char rawData[NES_BITCOUNT];
 
 void setup()
 {
@@ -42,8 +42,6 @@ void updateState()
     {
         WAIT_FALLING_EDGE(NES_CLOCK);
         *rawDataPtr = !PIN_READ(NES_DATA);
-        *(rawDataPtr + 8) = !PIN_READ(NES_DATA0);
-        *(rawDataPtr + 16) = !PIN_READ(NES_DATA1);
         ++rawDataPtr;
     } while (--bits > 0);
 }
@@ -51,6 +49,6 @@ void updateState()
 void loop()
 {
     updateState();
-    sendRawData(rawData, NES_BITCOUNT * 3);
+    sendRawData(rawData, NES_BITCOUNT);
     T_DELAY(5);
 }

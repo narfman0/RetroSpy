@@ -27,6 +27,7 @@ namespace RetroSpy
     {
         private const int BAUD_RATE = 115200;
         private const int TIMER_MS = 4;
+        private const int PACKET_SIZE = 11;
 
         public event EventHandler<PacketDataEventArgs> PacketReceived;
 
@@ -44,7 +45,7 @@ namespace RetroSpy
         {
             _printerMode = printerMode;
             _localBuffer = new List<byte>();
-            _datPort = new SerialPort(portName != null ? portName.Split(' ')[0] : "", useLagFix ? 57600 : BAUD_RATE);
+            _datPort = new SerialPort(portName != null ? portName.Split(' ')[0] : "", BAUD_RATE);
         }
 
         public void Start()
@@ -61,8 +62,10 @@ namespace RetroSpy
             }
 
             _datPort.Open();
-
-            streamwriter = null; //File.CreateText("./serialMonitorDebug.txt");
+            // make sure we are at a packet boundary, since we have to track this now
+            Thread.Sleep(20);
+            _datPort.ReadTo("\n");
+            streamwriter = null;// File.CreateText("./serialMonitorDebug.txt");
             autoEvent = new AutoResetEvent(false);
             _timer = new Timer(Tick, autoEvent, 0, TIMER_MS);
         }
@@ -97,6 +100,7 @@ namespace RetroSpy
             }
         }
 
+
         private void Tick(Object stateInfo)
         {
             if (_datPort == null || !_datPort.IsOpen || PacketReceived == null || ticking)
@@ -112,12 +116,11 @@ namespace RetroSpy
                 int readCount = _datPort.BytesToRead;
                 if (readCount < 1)
                 {
-                    if(streamwriter != null)
+                    if (streamwriter != null)
                         streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " readCount < 1");
                     ticking = false;
                     return;
                 }
-
                 byte[] readBuffer = new byte[readCount];
                 _ = _datPort.Read(readBuffer, 0, readCount);
                 //_datPort.DiscardInBuffer();
@@ -130,6 +133,13 @@ namespace RetroSpy
                 ticking = false;
                 if (streamwriter != null)
                     streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " IOException");
+                return;
+            }
+            if (_localBuffer.Count < PACKET_SIZE)
+            {
+                ticking = false;
+                if (streamwriter != null)
+                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " _localBuffer.Count < PACKET_SIZE " + _localBuffer.Count);
                 return;
             }
 
@@ -156,36 +166,21 @@ namespace RetroSpy
             int packetStart = sndLastSplitIndex + 1;
             int packetSize = lastSplitIndex - packetStart;
 
-            if (_printerMode)
+            byte[] retrospyPacket = _localBuffer.GetRange(packetStart, packetSize).ToArray();
+            PacketReceived(this, new PacketDataEventArgs(retrospyPacket));
+
+            for (int i = 0; i+PACKET_SIZE <= lastSplitIndex + 1; i += PACKET_SIZE)
             {
-                byte[] array = _localBuffer.ToArray();
-                string lastCommand = Encoding.UTF8.GetString(array, 0, lastSplitIndex);
-
-                if (lastCommand.Contains("# Finished Pretending To Print for fun!") || lastCommand.Contains("// Timed Out (Memory Waterline: 4B out of 400B)"))
-                {
-                    PacketReceived(this, new PacketDataEventArgs(_localBuffer.GetRange(0, lastSplitIndex).ToArray()));
-
-                    // Clear our buffer up until the last split character.
-                    _localBuffer.RemoveRange(0, lastSplitIndex);
-                }
+                byte[] packet = _localBuffer.GetRange(i, PACKET_SIZE-1).ToArray();
+                var diff = packet[packet.Length - 2] + (packet[packet.Length - 1] << 8);
+                SendUdp(47569, "127.0.0.1", 47569, packet);
+                if (streamwriter != null)
+                    streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " i=" + i + " diff=" + diff);
             }
-            else
-            {
 
-                byte[] packet = _localBuffer.GetRange(packetStart, packetSize).ToArray();
-                PacketReceived(this, new PacketDataEventArgs(packet));
-                if(packet.Length > 2)
-                {
-
-                    var diff = packet[packet.Length - 2] + (packet[packet.Length - 1] << 8);
-                    SendUdp(47569, "127.0.0.1", 47569, packet);
-                    if (streamwriter != null)
-                        streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " diff=" + diff);
-                }
-
-                // Clear our buffer up until the last split character.
-                _localBuffer.RemoveRange(0, lastSplitIndex);
-            }
+            // Clear our buffer up until the last split character.
+            if (_localBuffer.Count >= PACKET_SIZE)
+                _localBuffer.RemoveRange(0, lastSplitIndex+1);
             ticking = false;
         }
         private static void SendUdp(int srcPort, string dstIp, int dstPort, byte[] data)
