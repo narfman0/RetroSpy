@@ -173,7 +173,11 @@ namespace RetroSpy
             {
                 byte[] packet = _localBuffer.GetRange(i, PACKET_SIZE-1).ToArray();
                 var diff = packet[packet.Length - 2] + (packet[packet.Length - 1] << 8);
-                SendUdp(47569, "127.0.0.1", 47569, packet);
+                if(diff > 18)
+                {
+                    byte[] payload = new byte[] { packet[packet.Length - 2], packet[packet.Length - 1] };
+                    SendUdp(47569, "127.0.0.1", 47569, payload);
+                }
                 if (streamwriter != null)
                     streamwriter.WriteLine(DateTimeOffset.Now.ToUnixTimeMilliseconds() + " i=" + i + " diff=" + diff);
             }
